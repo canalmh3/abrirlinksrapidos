@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abrir Links Rápido</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="https://i.postimg.cc/QC3RGgGs/Designer-1.jpg" type="image/jpg">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://i.postimg.cc/QC3RGgGs/Designer-1.jpg" alt="Ícone" class="icon">
+            <h1>Abrir Links Rápido Carregar Cockies🍪</h1>
+        </div>
+        <p>Cole as URLs (uma por linha) ou use a sugestão de links aleatórios:</p>
+        <textarea id="urlInput" rows="10" placeholder="Cole as URLs aqui..."></textarea>
+        <div class="actions">
+            <label for="numLinks">Quantos links abrir de cada vez:</label>
+            <select id="numLinks">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <button class="btn-verde" onclick="abrirURLs()">Abrir Links</button>
+        <button class="btn-azul" onclick="limparURLs()">Limpar</button>
+        <button class="btn-rosa" onclick="sugerirLinks()">Sugerir Links Aleatórios</button>
+
+        <p id="status"></p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #000000; /* Fundo preto estilo hacker */
+    color: #00ff00; /* Cor verde neon para o texto */
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #111111; /* Fundo mais escuro */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 255, 0, 0.7); /* Sombra neon verde */
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+h1 {
+    font-size: 28px;
+    color: #00ff00; /* Título em neon verde */
+    text-shadow: 0 0 1px #00ff00, 0 0 5px #00ff00;
+    text-align: center;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: #111111;
+    color: #00ff00; /* Texto neon verde */
+    border: 1px solid #00ff00;
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+}
+
+label {
+    font-size: 16px;
+}
+
+select {
+    padding: 5px;
+    font-size: 16px;
+    background-color: #000000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+
+/* Estilos para os botões */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Estilos específicos para cada botão */
+.btn-verde {
+    background-color: #00ff00; /* Verde neon */
+}
+
+.btn-verde:hover {
+    box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    transform: scale(1.1); /* Cresce ao passar o mouse */
+}
+
+.btn-azul {
+    background-color: #00aaff; /* Azul neon */
+}
+
+.btn-azul:hover {
+    box-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
+    transform: rotate(10deg); /* Gira levemente ao passar o mouse */
+}
+
+.btn-rosa {
+    background-color: #ff00ff; /* Rosa neon */
+}
+
+.btn-rosa:hover {
+    box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+    transform: translateY(-5px); /* Sobe levemente ao passar o mouse */
+}
+
+#status {
+    text-align: center;
+    font-size: 14px;
+    color: red;
+    margin-top: 10px;
+}
