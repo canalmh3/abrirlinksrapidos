@@ -1,1 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordPress Pages Viewer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+            font-size: 1.25rem;
+            color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        th.sortable:hover {
+            cursor: pointer;
+            background-color: #e5e7eb;
+        }
+
+        th.sortable {
+            position: relative;
+        }
+
+        th.sortable .sort-icon {
+            position: absolute;
+            right: 10px;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <header class="bg-blue-600 text-white py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-center text-xl font-bold">WordPress Pages Viewer</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="mb-4">
+            <label for="domainInput" class="block text-sm font-medium text-gray-700">Digite o domínio base:</label>
+            <div class="flex mt-2">
+                <input type="text" id="domainInput" placeholder="Exemplo: https://aanareis.com.br" class="flex-grow p-2 border border-gray-300 rounded-md">
+                <button id="fetchPages" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Buscar</button>
+                <button id="clearSearch" class="ml-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Limpar</button>
+            </div>
+        </div>
+
+        <div id="filters" class="flex mb-4 gap-4">
+            <label class="text-sm text-gray-700">
+                Páginas por requisição:
+                <input type="number" id="perPage" min="1" value="99" class="p-2 border border-gray-300 rounded-md w-16">
+            </label>
+            <label class="text-sm text-gray-700">
+                Página atual:
+                <input type="number" id="currentPage" min="1" value="1" class="p-2 border border-gray-300 rounded-md w-16">
+            </label>
+        </div>
+
+        <div id="loading" class="loading text-center font-medium">
+            <i class="fas fa-spinner"></i> Carregando...
+        </div>
+
+        <div id="log" class="text-sm text-gray-500 mb-4"></div>
+
+        <table id="pagesTable" class="table-auto w-full border-collapse border border-gray-200 bg-white shadow-md rounded-md hidden">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border border-gray-300 px-4 py-2 sortable" data-column="title">Título <span class="sort-icon">&#8597;</span></th>
+                    <th class="border border-gray-300 px-4 py-2 sortable" data-column="id">ID <span class="sort-icon">&#8597;</span></th>
+                    <th class="border border-gray-300 px-4 py-2">Slug</th>
+                    <th class="border border-gray-300 px-4 py-2 sortable" data-column="status">Status <span class="sort-icon">&#8597;</span></th>
+                    <th class="border border-gray-300 px-4 py-2">Tipo</th>
+                    <th class="border border-gray-300 px-4 py-2">Autor</th>
+                    <th class="border border-gray-300 px-4 py-2 sortable" data-column="date">Criado em <span class="sort-icon">&#8597;</span></th>
+                    <th class="border border-gray-300 px-4 py-2 sortable" data-column="modified">Modificado em <span class="sort-icon">&#8597;</span></th>
+                    <th class="border border-gray-300 px-4 py-2">Link</th>
+                </tr>
+            </thead>
+            <tbody id="pagesContainer">
+                <!-- Linhas serão adicionadas aqui -->
+            </tbody>
+        </table>
+
+        <div id="pagination" class="mt-4 text-center hidden">
+            <button id="prevPage" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anterior</button>
+            <button id="nextPage" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Próximo</button>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <p class="text-center">&copy; 2024. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        const fetchButton = document.getElementById('fetchPages');
+        const clearButton = document.getElementById('clearSearch');
+        const domainInput = document.getElementById('domainInput');
+        const perPageInput = document.getElementById('perPage');
+        const currentPageInput = document.getElementById('currentPage');
+        const log = document.getElementById('log');
+        const loading = document.getElementById('loading');
+        const pagesContainer = document.getElementById('pagesContainer');
+        const pagesTable = document.getElementById('pagesTable');
+        const pagination = document.getElementById('pagination');
+        const prevPageButton = document.getElementById('prevPage');
+        const nextPageButton = document.getElementById('nextPage');
+        const tableHeaders = document.querySelectorAll('th.sortable');
+
+        let totalPages = 0;
+        let currentSortColumn = null;
+        let sortDirection = 'asc';
+
+        async function fetchPages(page = 1) {
+            let domain = domainInput.value.trim();
+            const perPage = parseInt(perPageInput.value) || 99;
+
+            if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
+                domain = 'https://' + domain;
+            }
+
+            try {
+                const url = new URL(domain);
+                domain = url.origin;
+            } catch {
+                log.textContent = "URL inválida. Por favor, insira um domínio válido.";
+                return;
+            }
+
+            log.textContent = `Buscando páginas em: ${domain}`;
+            pagesContainer.innerHTML = "";
+            loading.style.display = "block";
+            pagination.style.display = "none";
+            pagesTable.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${domain}/wp-json/wp/v2/pages?per_page=${perPage}&page=${page}`);
+                if (!response.ok) throw new Error(`Erro: ${response.statusText}`);
+
+                const totalItems = response.headers.get('X-WP-Total');
+                totalPages = response.headers.get('X-WP-TotalPages');
+
+                const pages = await response.json();
+
+                if (pages.length === 0) {
+                    log.textContent = "Nenhuma página encontrada.";
+                } else {
+                    renderTable(pages);
+                    log.textContent = `Total de páginas: ${totalItems}, exibindo página ${page} de ${totalPages}`;
+                    currentPageInput.value = page;
+                    pagination.style.display = totalPages > 1 ? "block" : "none";
+                    prevPageButton.disabled = page <= 1;
+                    nextPageButton.disabled = page >= totalPages;
+                }
+            } catch (error) {
+                log.textContent = `Erro ao buscar páginas: ${error.message}`;
+            } finally {
+                loading.style.display = "none";
+            }
+        }
+
+        function renderTable(pages) {
+            pagesContainer.innerHTML = '';
+            pages.forEach(page => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border border-gray-300 px-4 py-2">${page.title.rendered || 'Sem título'}</td>
+                    <td class="border border-gray-300 px-4 py-2">${page.id}</td>
+                    <td class="border border-gray-300 px-4 py-2">${page.slug}</td>
+                    <td class="border border-gray-300 px-4 py-2">${page.status}</td>
+                    <td class="border border-gray-300 px-4 py-2">${page.type}</td>
+                    <td class="border border-gray-300 px-4 py-2">${page.author}</td>
+                    <td class="border border-gray-300 px-4 py-2">${new Date(page.date).toLocaleString()}</td>
+                    <td class="border border-gray-300 px-4 py-2">${new Date(page.modified).toLocaleString()}</td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        <a href="${page.link}" target="_blank" class="text-blue-600 hover:underline">Ver</a>
+                    </td>
+                `;
+                pagesContainer.appendChild(row);
+            });
+            pagesTable.classList.remove('hidden');
+        }
+
+        function sortTable(column) {
+            const rows = Array.from(pagesContainer.querySelectorAll('tr'));
+            const columnIndex = Array.from(tableHeaders).findIndex(th => th.dataset.column === column);
+            const direction = sortDirection === 'asc' ? 1 : -1;
+
+            rows.sort((a, b) => {
+                const cellA = a.children[columnIndex].textContent.trim();
+                const cellB = b.children[columnIndex].textContent.trim();
+
+                return cellA.localeCompare(cellB) * direction;
+            });
+
+            pagesContainer.innerHTML = '';
+            rows.forEach(row => pagesContainer.appendChild(row));
+
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        }
+
+        tableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.column;
+                if (column) {
+                    sortTable(column);
+                }
+            });
+        });
+
+        fetchButton.addEventListener('click', () => fetchPages(parseInt(currentPageInput.value)));
+
+        clearButton.addEventListener('click', () => {
+            domainInput.value = "";
+            pagesContainer.innerHTML = "";
+            log.textContent = "";
+            pagination.style.display = "none";
+            pagesTable.classList.add('hidden');
+        });
+
+        prevPageButton.addEventListener('click', () => {
+            const currentPage = parseInt(currentPageInput.value);
+            if (currentPage > 1) fetchPages(currentPage - 1);
+        });
+
+        nextPageButton.addEventListener('click', () => {
+            const currentPage = parseInt(currentPageInput.value);
+            if (currentPage < totalPages) fetchPages(currentPage + 1);
+        });
+    </script>
+
+</body>
+</html>
